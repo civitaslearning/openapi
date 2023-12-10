@@ -1,0 +1,99 @@
+openapi: 3.0.3
+info:
+  title: Civitas Learning PartnerHub API
+  version: 0.1.0
+  description: Access your Civitas Learning instance.
+components:
+  schemas:
+    AdvisorKey:
+      type: string
+    StudentKey:
+      type: string
+    EmailAddress:
+      type: string
+    PhysicalAddress:
+      type: object
+      properties:
+        line1:
+          type: string
+        line2:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        postalCode:
+          type: string
+    AdvisorRole:
+      type: string
+      description: >
+        Combined with the StudentSuccessUnits on an Advisor,
+        determines which students are visible.
+      enum:
+        - Director
+        - Advisor+
+        - Advisor
+        - AdministrativeAssistant
+        - Faculty
+    AdvisorType:
+      type: string
+      description: >
+        Determines which data is visible to an Advisor. 
+    StudentSuccessUnit:
+      type: string
+      description: A custom grouping of advisors and students.
+    AdvisorPermissions:
+      type: string
+      description: These permissions are available to individual advisors.
+      enum:
+        - EnableSMS
+        - ManageAlerts
+        - ManageResourceLibrary
+        - ManageSchedules
+        - ManageWalkInQueue
+        - ManageUsers
+        - SendAnnouncements
+        - ViewAllStudentsAtInstitution
+        - FacultyAddOn
+        - ManageServicesConfiguration
+        - ManageCalendarConfiguration
+        - ManageDashboards
+
+
+    Advisor:
+      type: object
+      required:
+        - advisorKey
+        - firstName
+        - lastName
+        - email
+      properties:
+        advisorKey:
+          $ref: "#/components/schemas/AdvisorKey"
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          $ref: "#/components/schemas/EmailAddress"
+          description: Email address must be unique in your instance.
+        title:
+          type: string
+        officeAddress:
+          $ref: "#/components/schemas/PhysicalAddress"
+        primaryRole:
+          $ref: "#/components/schemas/AdvisorRole"
+        advisorType:
+          $ref: "#/components/schemas/AdvisorType"
+        studentSuccessUnits:
+          type: array
+          items:
+            $ref: "#/components/schemas/StudentSuccessUnit"
+        permissions:
+          type: array
+          items:
+            $ref: "#/components/schemas/AdvisorPermissions"
+        
+
+
+    
