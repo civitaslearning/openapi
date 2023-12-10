@@ -2,17 +2,39 @@ openapi: 3.0.3
 info:
   title: Civitas Learning PartnerHub API
   version: 0.1.0
-  description: Access your Civitas Learning instance.
+  description: Access your Civitas Learning instance over HTTPS with JSON.
 components:
   schemas:
+    Error:
+      type: object
+      description: >
+        A container that provides error responses for invalid or failed API calls.
+      required:
+        - message
+      properties:
+        message:
+          type: string
+    PartnerKey:
+      type: string
+      description: >
+        A unique string from the partner's point of view that we will use as a
+        surrogate key to identify an individual.
+        Note that we have our own internal keys as well, but you won't be 
+        expected to keep track of them.
+        Note that there is no 'changing' of a PartnerKey. Any value we haven't
+        seen before will be treated as a whole new entity.
     AdvisorKey:
-      type: string
+      $ref: "#/components/schemas/PartnerKey"
     StudentKey:
-      type: string
+      $ref: "#/components/schemas/PartnerKey"
     EmailAddress:
       type: string
+      format: email
     PhysicalAddress:
       type: object
+      description: >
+        An old fashioned real work physical address, like you would put on an envelope,
+        and stuff in a mailbox.
       properties:
         line1:
           type: string
@@ -27,7 +49,8 @@ components:
     AdvisorRole:
       type: string
       description: >
-        Combined with the StudentSuccessUnits on an Advisor,
+        An assignment of data access permissions to an individual Advisor.
+        Combined with the `studentSuccessUnits` on an Advisor,
         determines which students are visible.
       enum:
         - Director
@@ -38,13 +61,15 @@ components:
     AdvisorType:
       type: string
       description: >
-        Determines which data is visible to an Advisor. 
-    StudentSuccessUnit:
+        Determines which data fields and filters are visible to an Advisor. 
+    StudentSuccessUnitName:
       type: string
-      description: A custom grouping of advisors and students.
+      description: >
+        A custom grouping of advisors and students.
     AdvisorPermissions:
       type: string
-      description: These permissions are available to individual advisors.
+      description: >
+        These permissions are available to individual advisors.
       enum:
         - EnableSMS
         - ManageAlerts
@@ -58,10 +83,11 @@ components:
         - ManageServicesConfiguration
         - ManageCalendarConfiguration
         - ManageDashboards
-
-
     Advisor:
       type: object
+      description: >
+        An Advisor is a user allowed to access functionality in our Advising 
+        application.
       required:
         - advisorKey
         - firstName
@@ -88,12 +114,138 @@ components:
         studentSuccessUnits:
           type: array
           items:
-            $ref: "#/components/schemas/StudentSuccessUnit"
+            $ref: "#/components/schemas/StudentSuccessUnitName"
         permissions:
           type: array
           items:
             $ref: "#/components/schemas/AdvisorPermissions"
-        
+paths:
+  /ssu:
+    get:
+      summary: >
+        List every available StudentSuccesUnit (SSU) configured in your partner
+        instance.
+      responses:
+        200:
+          description: >
+            An array of StudentSuccessUnitName(s).
+            These are valid values to assign to and Advisor `studentSuccessUnits`.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StudentSuccessUnitName"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /advisors:
+    post:
+      summary: >
+        Synchronize an Advisor to your Partner instance.
 
+        If an Advisor is new, meaning the `advisorKey` is previously unknown in
+        our databases we'll go ahead and create a new Advisor for you and synch all the data.
+
+        If an Advisor exists, meaning the `advisorKey` is already known in our
+        databases, we'll go ahead and change the advisor properties to match 
+        what you have sent.
+
+        This approach eliminates the need for you to ask in advance if we
+        already know about a user. And it eliminates the need for you to 
+        try and keep track of Advisors you have have already sent us.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Advisor"
+      responses:
+        200:
+          description: >
+            An empty response when successful. No news is good news.
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /advisors/{advisorKey}:
+    delete:
+      summary: >
+        Remove an advisor from your Partner instance.
+        This is a soft delete. You can restore a user with a subsequent POST
+        to /advisors.
+      parameters:
+        - name: advisorKey
+          in: path
+          required: true
+          description: The specific Advisor you want to delete.
+          schema:
+            $ref: "#/components/schemas/AdvisorKey"
+      responses:
+        200:
+          description: >
+            An empty response when successful. No news is good news.
+        404:
+          description: >
+            An empty response when the `advisorKey` specified is unknown in our databases.
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /advisors/{advisorKey}/students:
+    post:
+      summary: >
+        Synchronize the list of Students assigned to an Advisor in your Partner instance.
+
+        Synchronizing your entire student assignment list. We'll sort out which 
+        students to add or delete from an individual Advisor. This avoids the need
+        for you to read or keep track of previous advisor assignments.
+      parameters:
+        - name: advisorKey
+          in: path
+          required: true
+          description: The specific Advisor you want to assign Students.
+          schema:
+            $ref: "#/components/schemas/AdvisorKey"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/StudentKey"
+      responses:
+        200:
+          description: >
+            The list of students assigned to this advisor.
+
+            It is possible this list does not match the input request if some
+            of the StudentKeys provided are unknown in our databases.
+
+            You can do a set subtraction between your request and this response
+            to find students that are missing in our databases, or to detect that
+            StudentKeys you passed are incorrect.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/StudentKey"
+        404:
+          description: >
+            An empty response when the `advisorKey` specified is unknown in our databases.
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    
 
     
