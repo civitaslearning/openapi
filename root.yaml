@@ -62,6 +62,7 @@ components:
       type: string
       description: >
         Determines which data fields and filters are visible to an Advisor. 
+        This is customizable per Partner.
     StudentSuccessUnitName:
       type: string
       description: >
@@ -166,6 +167,27 @@ paths:
         200:
           description: >
             An empty response when successful. No news is good news.
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /advisors/types:
+    get:
+      summary: >
+        List every available AdvisorType configured in your partner instance.
+      responses:
+        200:
+          description: >
+            An array of AdvisorType(s).
+            These are valid values to assign to and Advisor `advisorType`.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdvisorType"
         default:
           description: unexpected error
           content:
