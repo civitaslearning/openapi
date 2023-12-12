@@ -88,7 +88,7 @@ components:
       type: string
       description: >
         An individual named permission that can be granted to a user.
-    VisibilityOption:
+    VisibilityOptionAssigned:
       type: string
       description: >
         A reverse permission used to enable Student(s) access to Advisor(s)
@@ -96,6 +96,13 @@ components:
         - AllStudents
         - NoStudents
         - AssignedStudents
+    VisibilityOption:
+      type: string
+      description: >
+        A reverse permission used to enable Student(s) access to Advisor(s)
+      enum:
+        - AllStudents
+        - NoStudents
     Advisor:
       type: object
       description: >
@@ -135,7 +142,7 @@ components:
         calendarVisibility:
           description: >
             Control which Student(s) can see this Advisor's calendar. 
-          $ref: "#/components/schemas/VisibilityOption"
+          $ref: "#/components/schemas/VisibilityOptionAssigned"
         directoryVisibility:
           description: >
             Control which Student(s) can see this Advisor in the Advisor directory.
