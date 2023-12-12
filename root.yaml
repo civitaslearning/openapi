@@ -30,6 +30,7 @@ components:
     EmailAddress:
       type: string
       format: email
+      description: Email address must be unique in your instance.
     PhysicalAddress:
       type: object
       description: >
@@ -46,6 +47,16 @@ components:
           type: string
         postalCode:
           type: string
+    AdvisorToStudentAssignment:
+      type: object
+      description: >
+        Assigns a single student to a single advisor with an AdvisorType that
+        describes the relationship between Student and Advisor.
+      properties:
+        advisorType:
+          $ref: "#/components/schemas/AdvisorType"
+        studentKey:
+          $ref: "#/components/schemas/StudentKey"
     AdvisorRole:
       type: string
       description: >
@@ -61,29 +72,25 @@ components:
     AdvisorType:
       type: string
       description: >
-        Determines which data fields and filters are visible to an Advisor. 
-        This is customizable per Partner.
+        Describes the advising relationship between Advisor and Student, for 
+        example an Academic Advisor and a Career Counsellor.
+        This list of AdvisorType(s) is customizable per Partner.
     StudentSuccessUnitName:
       type: string
       description: >
         A custom grouping of advisors and students.
-    AdvisorPermissions:
+    AdvisorPermission:
       type: string
       description: >
-        These permissions are available to individual advisors.
+        An individual named permission that can be granted to a user.
+    VisibilityOption:
+      type: string
+      description: >
+        A reverse permission used to enable Student(s) access to Advisor(s)
       enum:
-        - EnableSMS
-        - ManageAlerts
-        - ManageResourceLibrary
-        - ManageSchedules
-        - ManageWalkInQueue
-        - ManageUsers
-        - SendAnnouncements
-        - ViewAllStudentsAtInstitution
-        - FacultyAddOn
-        - ManageServicesConfiguration
-        - ManageCalendarConfiguration
-        - ManageDashboards
+        - AllStudents
+        - NoStudents
+        - AssignedStudents
     Advisor:
       type: object
       description: >
@@ -119,7 +126,26 @@ components:
         permissions:
           type: array
           items:
-            $ref: "#/components/schemas/AdvisorPermissions"
+            $ref: "#/components/schemas/AdvisorPermission"
+        calendarVisibility:
+          description: >
+            Control which Student(s) can see this Advisor's calendar. 
+          $ref: "#/components/schemas/VisibilityOption"
+        directoryVisibility:
+          description: >
+            Control which Student(s) can see this Advisor in the Advisor directory.
+          $ref: "#/components/schemas/VisibilityOption"
+        messagingVisibility:
+          description: >
+            Control which Student(s) can send messages to this Advisor.
+          $ref: "#/components/schemas/VisibilityOption"
+        assistantTo:
+          description: >
+            An Advisor may be an Assitant to zero or more other Advisor(s).
+            This allows access to the assisted Advisor's calendar.
+          type: array
+          items:
+            $ref: "#/components/schemas/AdvisorKey"
 paths:
   /ssu:
     get:
@@ -173,6 +199,29 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /advisors/permissions:
+    get:
+      summary: >
+        List every available AdvisorPermission configured in your partner instance.
+      responses:
+        200:
+          description: >
+            An array of AdvisorPermission(s).
+            These are valid values to assign to and Advisor `permissions`.
+            This will include the EnableSMS permission for Partner instances
+            with SMS enabled.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AdvisorPermission"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /advisors/types:
     get:
       summary: >
@@ -197,14 +246,14 @@ paths:
   /advisors/{advisorKey}:
     delete:
       summary: >
-        Remove an advisor from your Partner instance.
-        This is a soft delete. You can restore a user with a subsequent POST
-        to /advisors.
+        Deactivates a user in your Partner instance.
+        This user is no longer able to log in or use Advising.
+        You can restore a user with a subsequent POST to /advisors.
       parameters:
         - name: advisorKey
           in: path
           required: true
-          description: The specific Advisor you want to delete.
+          description: The specific Advisor you want to deactivate.
           schema:
             $ref: "#/components/schemas/AdvisorKey"
       responses:
@@ -228,6 +277,12 @@ paths:
         Synchronizing your entire student assignment list. We'll sort out which 
         students to add or delete from an individual Advisor. This avoids the need
         for you to read or keep track of previous advisor assignments.
+
+        A given advisor MAY have multiple assignemnts to a student if
+        the Advisor has multiple AdvisorType(s) assigned.
+
+        If you request an AdvisorType to Student pairing and that AdvisorType
+        is not on the Advisor, we'll go ahead and add it for you.
       parameters:
         - name: advisorKey
           in: path
@@ -241,7 +296,7 @@ paths:
             schema:
               type: array
               items:
-                $ref: "#/components/schemas/StudentKey"
+                $ref: "#/components/schemas/AdvisorToStudentAssignment"
       responses:
         200:
           description: >
