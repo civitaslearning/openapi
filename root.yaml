@@ -4,6 +4,11 @@ info:
   version: 0.1.0
   description: Access your Civitas Learning instance over HTTPS with JSON.
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   schemas:
     Error:
       type: object
@@ -152,6 +157,8 @@ paths:
       summary: >
         List every available StudentSuccesUnit (SSU) configured in your partner
         instance.
+      security:
+        - bearerAuth: []
       responses:
         200:
           description: >
@@ -163,6 +170,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/StudentSuccessUnitName"
+        401:
+          description: >
+            Authentication error from an invalid JWT.
         default:
           description: unexpected error
           content:
@@ -184,6 +194,8 @@ paths:
         This approach eliminates the need for you to ask in advance if we
         already know about a user. And it eliminates the need for you to 
         try and keep track of Advisors you have have already sent us.
+      security:
+        - bearerAuth: []
       requestBody:
         content:
           application/json:
@@ -203,6 +215,8 @@ paths:
     get:
       summary: >
         List every available AdvisorPermission configured in your partner instance.
+      security:
+        - bearerAuth: []
       responses:
         200:
           description: >
@@ -216,6 +230,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AdvisorPermission"
+        401:
+          description: >
+            Authentication error from an invalid JWT.
         default:
           description: unexpected error
           content:
@@ -226,6 +243,8 @@ paths:
     get:
       summary: >
         List every available AdvisorType configured in your partner instance.
+      security:
+        - bearerAuth: []
       responses:
         200:
           description: >
@@ -237,6 +256,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AdvisorType"
+        401:
+          description: >
+            Authentication error from an invalid JWT.
         default:
           description: unexpected error
           content:
@@ -249,6 +271,8 @@ paths:
         Deactivates a user in your Partner instance.
         This user is no longer able to log in or use Advising.
         You can restore a user with a subsequent POST to /advisors.
+      security:
+        - bearerAuth: []
       parameters:
         - name: advisorKey
           in: path
@@ -260,6 +284,9 @@ paths:
         200:
           description: >
             An empty response when successful. No news is good news.
+        401:
+          description: >
+            Authentication error from an invalid JWT.
         404:
           description: >
             An empty response when the `advisorKey` specified is unknown in our databases.
@@ -283,6 +310,8 @@ paths:
 
         If you request an AdvisorType to Student pairing and that AdvisorType
         is not on the Advisor, we'll go ahead and add it for you.
+      security:
+        - bearerAuth: []
       parameters:
         - name: advisorKey
           in: path
@@ -314,6 +343,9 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/StudentKey"
+        401:
+          description: >
+            Authentication error from an invalid JWT.
         404:
           description: >
             An empty response when the `advisorKey` specified is unknown in our databases.
