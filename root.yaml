@@ -103,6 +103,13 @@ components:
       enum:
         - AllStudents
         - NoStudents
+    ProductAccess:
+      type: string
+      description: >
+        Advisors can access multiple Civitas products. These are the allowed values.
+      enum:
+        - Advising
+        - Analytics
     Advisor:
       type: object
       description: >
@@ -158,6 +165,10 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AdvisorKey"
+        products:
+          type: array
+          items:
+            $ref: "#/components/schemas/ProductAccess"
 paths:
   /ssu:
     get:
