@@ -32,6 +32,11 @@ components:
       $ref: "#/components/schemas/PartnerKey"
     StudentKey:
       $ref: "#/components/schemas/PartnerKey"
+    Active:
+      type: boolean
+      description: >
+        True when a user is really live and active, false when deactivated.
+        This is a form of soft delete which prevents access.
     EmailAddress:
       type: string
       format: email
